@@ -5,3 +5,7 @@ for(var i = 0 ; i <numberOfDrumButtons; ++i){
         this.style.color="blue";
     });
 }
+
+document.addEventListener("keydown",function(){
+   alert("key pressed"); 
+});
