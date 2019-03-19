@@ -42,10 +42,15 @@ function modelLoaded() {
 
 // Apply the transfer to both images!
 function transferImages() {
+  statusMsg.html('Applying Style Transfer...!');
   
   style1.transfer(inputImg, function(err, result) {
-    createImg(result.src).parent('style-img');
+   console.log(result); createImg(result.src).parent('styleA');
   });
 
+  style2.transfer(inputImg, function(err, result) {
+    createImg(result.src).parent('styleB');
+  });
 
+  statusMsg.html('Done!');
 }
