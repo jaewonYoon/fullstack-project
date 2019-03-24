@@ -20,6 +20,7 @@ app.use(express.static("public"));
 let posts =[]; 
 
 app.get("/",function(req,res){
+   console.log("test for print");
    res.render("home",{
        context:homeStartingContent,
        posts:posts,
