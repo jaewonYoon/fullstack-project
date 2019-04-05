@@ -3,6 +3,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const lodash = require("lodash");
 const date = require(__dirname + "/date.js");
 const app = express();
 app.set('view engine', 'ejs');
@@ -10,7 +11,9 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect("mongodb://localhost:27017/todolistDB",{useNewUrlParser: true});
+mongoose.connect("mongodb+srv://admin-jaewon:test123@cluster0-ehw4p.mongodb.net/todolistDB",{useNewUrlParser: true});
+
+//mongoose.connect("mongodb://localhost:27017/todolistDB",{useNewUrlParser: true});
 //schema를 만들고 만든 스키마로 collection을 만든다.
 const itemsSchema ={
     name:String,
@@ -69,7 +72,10 @@ app.get("/", function(req, res) {
     });
 });
 app.get("/:customListName", function(req,res){
-    const customListName = req.params.customListName;
+    let customListName = req.params.customListName;
+    customListName = lodash.lowerCase(customListName);
+    customListName = lodash.kebabCase(customListName);
+    customListName = lodash.capitalize(customListName);
     List.findOne({name: customListName},function(err,results){
         if(err){
             console.log(err);
@@ -96,11 +102,26 @@ app.get("/:customListName", function(req,res){
 //add item
 app.post("/", function(req, res){
   const ItemName  = req.body.newItem;
+  const listName = req.body.list;
+  console.log(listName);
   const item =  new Item({
-      name: ItemName,
+        name: ItemName,
   });
-  item.save();
-  res.redirect('/');
+  if(listName==="Today"){    
+      item.save();
+      res.redirect("/");
+  }else{
+      List.findOne({name:listName},function(err,foundList){
+          console.log(foundList);
+      if(!err){
+        foundList.items.push(item);
+        foundList.save();
+        res.redirect("/"+listName);
+      } else{
+          console.log(err);
+      }
+    });
+  }
 });
 
 //app.post("/:customListName", function(req,res){
@@ -113,15 +134,30 @@ app.post("/", function(req, res){
 //delete item 
 app.post("/delete",function(req,res){
    const checkedItemId = req.body.checkbox; 
-   Item.findByIdAndRemove(checkedItemId,function(err){
+   const listName= req.body.listName;
+    
+    if(listName==="Today"){
+        Item.findByIdAndRemove(checkedItemId,function(err){
        if(err){
            console.log(err);
        }else{
            console.log("Item "+checkedItemId+"has removed successfully");
+           res.redirect('/');
        }
    });
-    res.redirect('/');
-});
+    } else{
+        List.findOneAndUpdate({name:listName},{$pull: {items: {_id : checkedItemId}}}, function(err,foundItem){
+            if(err){
+                console.log(err);
+            } else{ 
+            console.log("Item "+checkedItemId+" has removed successfully");
+            console.log(foundItem.items);
+            foundItem.save(); 
+            res.redirect('/'+listName);    
+            }
+            });
+        }
+    });
 app.get("/work", function(req,res){
   res.render("list", {listTitle: "Work List", newListItems: workItems});
 });
@@ -129,7 +165,10 @@ app.get("/work", function(req,res){
 app.get("/about", function(req, res){
   res.render("about");
 });
-
-app.listen(3000, function() {
-  console.log("Server started on port 3000");
+let port = process.env.PORT;
+if( port ==null || port ==""){
+    port =3000; 
+}
+app.listen(port, function() {
+  console.log("Server started successfully");
 });
