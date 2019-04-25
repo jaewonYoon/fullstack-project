@@ -3,6 +3,8 @@ import SearchBar from "./SearchBar";
 import youtube from "../apis/youtube";
 import VideoList from "./VideoList";
 import VideoDetail from "./VideoDetail";
+require("dotenv").config();
+
 class App extends React.Component {
   state = { videos: [], selectedVideo: null };
   componentDidMount() {
